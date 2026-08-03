@@ -16,6 +16,9 @@ let currentRole = null; // 'player1' o 'player2'
 let sessionRef = null;
 let playerNames = { player1: null, player2: null };
 let currentQIndex = 0;
+let gamePath = null;
+let activeQuestions = QUESTIONS;
+let coupleModeStarted = false;
 
 // ---------- Generar código corto (4 letras/números, sin caracteres confusos) ----------
 function generateCode() {
@@ -85,11 +88,18 @@ function listenForPartner(code) {
       // Solo cambiamos a screen-ready si el juego todavía no empezó
       if (!data.game) showScreen('screen-ready');
     }
+
+    // Detecta la transición a modo pareja (dispara en ambos navegadores)
+    if (data.coupleStartDate && data.coupleLevel && !coupleModeStarted) {
+      coupleModeStarted = true;
+      document.body.classList.add('couple-theme');
+      attachGameListener(`sessions/${code}/couple/game`, LEVEL_QUESTIONS[data.coupleLevel]);
+    }
   });
-  listenForGame(code);
+  attachGameListener(`sessions/${code}/game`, QUESTIONS);
 }
 
-// ---------- Empezar juego ----------
+// ---------- Empezar juego (nivel 1) ----------
 document.getElementById('btn-start-game').onclick = () => {
   db.ref('sessions/' + currentCode + '/game').set({
     currentQuestion: 0,
@@ -97,16 +107,22 @@ document.getElementById('btn-start-game').onclick = () => {
   });
 };
 
-// ---------- Escuchar el estado del juego (sincroniza a ambos) ----------
-function listenForGame(code) {
-  db.ref('sessions/' + code + '/game').on('value', (snapshot) => {
+// ---------- Motor de juego: escucha el estado y sincroniza a ambos ----------
+// path: ruta en Firebase donde vive este round (nivel 1 o modo pareja)
+// questions: el set de preguntas correspondiente a ese nivel
+function attachGameListener(path, questions) {
+  if (gamePath) db.ref(gamePath).off(); // deja de escuchar el round anterior
+  gamePath = path;
+  activeQuestions = questions;
+
+  db.ref(gamePath).on('value', (snapshot) => {
     const game = snapshot.val();
-    if (!game) return; // aún no empieza
+    if (!game) return; // aún no empieza este round
 
     const qIndex = game.currentQuestion || 0;
     currentQIndex = qIndex;
 
-    if (qIndex >= QUESTIONS.length) {
+    if (qIndex >= activeQuestions.length) {
       renderRecap(game.answers || {});
       showScreen('screen-done');
       return;
@@ -114,8 +130,8 @@ function listenForGame(code) {
 
     showScreen('screen-game');
     document.getElementById('game-progress').textContent =
-      `pregunta ${qIndex + 1} de ${QUESTIONS.length}`;
-    document.getElementById('game-question').textContent = QUESTIONS[qIndex];
+      `pregunta ${qIndex + 1} de ${activeQuestions.length}`;
+    document.getElementById('game-question').textContent = activeQuestions[qIndex];
 
     const answers = (game.answers && game.answers[qIndex]) || {};
     const otherRole = currentRole === 'player1' ? 'player2' : 'player1';
@@ -158,12 +174,35 @@ function listenForGame(code) {
 document.getElementById('btn-submit-answer').onclick = () => {
   const text = document.getElementById('game-answer-input').value.trim();
   if (!text) return;
-  db.ref(`sessions/${currentCode}/game/answers/${currentQIndex}/${currentRole}`).set(text);
+  db.ref(`${gamePath}/answers/${currentQIndex}/${currentRole}`).set(text);
 };
 
 // ---------- Siguiente pregunta (avance seguro con transaction) ----------
 document.getElementById('btn-next-question').onclick = () => {
-  db.ref(`sessions/${currentCode}/game/currentQuestion`).transaction(current => (current || 0) + 1);
+  db.ref(`${gamePath}/currentQuestion`).transaction(current => (current || 0) + 1);
+};
+
+// ---------- Pasar a modo pareja ----------
+document.getElementById('btn-go-couple').onclick = () => {
+  showScreen('screen-couple-date');
+};
+
+document.getElementById('btn-confirm-couple-date').onclick = () => {
+  const dateValue = document.getElementById('input-couple-date').value;
+  if (!dateValue) return;
+
+  const level = computeLevel(dateValue);
+
+  // Escribe la fecha y el nivel en la sesión: esto dispara la transición
+  // en AMBOS navegadores a través del listener raíz (listenForPartner)
+  db.ref('sessions/' + currentCode).update({
+    coupleStartDate: dateValue,
+    coupleLevel: level
+  });
+  db.ref(`sessions/${currentCode}/couple/game`).set({
+    currentQuestion: 0,
+    answers: {}
+  });
 };
 
 // ---------- Recap final: arma la lista y detecta coincidencias ----------
@@ -200,7 +239,7 @@ function renderRecap(answers) {
   container.innerHTML = '';
   let matchCount = 0;
 
-  QUESTIONS.forEach((question, i) => {
+  activeQuestions.forEach((question, i) => {
     const pair = answers[i] || {};
     const a = pair.player1 || '(sin responder)';
     const b = pair.player2 || '(sin responder)';
@@ -218,8 +257,15 @@ function renderRecap(answers) {
     container.appendChild(item);
   });
 
+  document.getElementById('done-title').textContent =
+    coupleModeStarted ? '¡Un poco más cerca!' : '¡Ya se conocen un poco más!';
+
   document.getElementById('done-match-summary').textContent =
-    `Coincidieron en ${matchCount} de ${QUESTIONS.length} respuestas.`;
+    `Coincidieron en ${matchCount} de ${activeQuestions.length} respuestas.`;
+
+  // En modo pareja no tiene sentido seguir ofreciendo "Ya somos pareja"
+  document.getElementById('btn-go-couple').style.display =
+    coupleModeStarted ? 'none' : 'inline-block';
 }
 
 // ---------- Unirse a sala existente ----------
@@ -267,7 +313,7 @@ document.getElementById('btn-join-session').onclick = async () => {
     document.getElementById('ready-names').textContent =
       `${data.player1.name} y ${name}`;
     showScreen('screen-ready');
-    listenForGame(code);
+    listenForPartner(code);
 
   } catch (err) {
     errorEl.textContent = 'Algo falló. Revisa tu conexión e intenta de nuevo.';
