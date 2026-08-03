@@ -127,6 +127,7 @@
         <button class="btn btn-primary" id="btn-hub-questions">Preguntas de esta etapa</button>
         <button class="btn btn-ghost" id="btn-hub-lovelang">Test de lenguajes del amor</button>
         <button class="btn btn-ghost" id="btn-hub-checkin">Chequeo del mes</button>
+        <button class="btn btn-ghost" id="btn-hub-timeline">Línea de tiempo</button>
       </div>
     </section>
 
@@ -170,6 +171,24 @@
       <div id="checkin-reveal" style="display:none;">
         <div id="checkin-reveal-list"></div>
       </div>
+    </section>
+
+    <!-- PANTALLA 13: línea de tiempo -->
+    <section id="screen-timeline" class="screen">
+      <button class="back" data-back="screen-couple-hub">← menú</button>
+      <p class="eyebrow">su historia</p>
+      <h2>Línea de tiempo</h2>
+
+      <button class="btn btn-ghost" id="btn-toggle-add-milestone">+ Agregar momento</button>
+
+      <div id="add-milestone-form" style="display:none;">
+        <input type="text" id="milestone-title" class="input" placeholder="¿Qué pasó?" maxlength="60">
+        <input type="date" id="milestone-date" class="input">
+        <textarea id="milestone-note" class="input textarea" rows="2" placeholder="Cuéntalo un poco más (opcional)"></textarea>
+        <button class="btn btn-primary" id="btn-save-milestone">Guardar</button>
+      </div>
+
+      <div id="timeline-list"></div>
     </section>
 
   </main>

@@ -264,6 +264,37 @@ h2 { font-size: 1.5rem; }
 .btn-option:hover { border-color: var(--turquoise); background: rgba(42,157,143,0.05); }
 
 /* Chequeo mensual */
+/* Línea de tiempo */
+.timeline-item {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  border-left: 4px solid var(--turquoise);
+  box-shadow: 0 3px 10px rgba(46,46,45,0.05);
+}
+.timeline-item.checkin-entry { border-left-color: var(--mustard); }
+.timeline-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 4px;
+}
+.timeline-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.98rem;
+  margin: 0 0 4px;
+}
+.timeline-note {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  margin: 0;
+  line-height: 1.4;
+}
+#add-milestone-form { margin: 14px 0; }
+
 .checkin-row {
   background: var(--card);
   border-radius: 12px;

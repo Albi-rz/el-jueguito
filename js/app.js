@@ -334,6 +334,7 @@ document.getElementById('btn-hub-questions').onclick = () => {
 };
 document.getElementById('btn-hub-lovelang').onclick = () => openLoveQuiz();
 document.getElementById('btn-hub-checkin').onclick = () => openCheckin();
+document.getElementById('btn-hub-timeline').onclick = () => openTimeline();
 
 document.getElementById('btn-back-to-hub').onclick = () => {
   inGameFlow = false;
@@ -590,9 +591,87 @@ function showCheckinWaitOrReveal() {
           </div>
         `;
       }).join('');
+
+      // Guarda una copia permanente en la línea de tiempo (una sola vez)
+      if (!data.timelineLogged) {
+        const summary = CHECKIN_AREAS.map(a => `${a.label}: ${data.player1[a.key]}/${data.player2[a.key]}`).join(' · ');
+        db.ref(`sessions/${currentCode}/timeline`).push({
+          type: 'checkin',
+          title: 'Chequeo mensual',
+          date: new Date().toISOString().slice(0, 10),
+          note: summary,
+          createdAt: Date.now()
+        });
+        db.ref(`sessions/${currentCode}/checkin/timelineLogged`).set(true);
+      }
     } else {
       document.getElementById('checkin-wait-status').style.display = 'block';
       document.getElementById('checkin-reveal').style.display = 'none';
     }
   });
 }
+
+// ================= LÍNEA DE TIEMPO =================
+let timelineListenerAttached = false;
+
+function openTimeline() {
+  showScreen('screen-timeline');
+  document.getElementById('add-milestone-form').style.display = 'none';
+
+  if (!timelineListenerAttached) {
+    timelineListenerAttached = true;
+    db.ref(`sessions/${currentCode}/timeline`).on('value', (snapshot) => {
+      renderTimeline(snapshot.val() || {});
+    });
+  }
+}
+
+function renderTimeline(entries) {
+  const container = document.getElementById('timeline-list');
+  const list = Object.values(entries).sort((a, b) => (a.date < b.date ? 1 : -1)); // más reciente primero
+
+  if (list.length === 0) {
+    container.innerHTML = '<p class="lead">Todavía no hay nada aquí. Agreguen su primer momento.</p>';
+    return;
+  }
+
+  container.innerHTML = list.map(entry => `
+    <div class="timeline-item ${entry.type === 'checkin' ? 'checkin-entry' : ''}">
+      <p class="timeline-date">${formatDateEs(entry.date)}</p>
+      <p class="timeline-title">${escapeHTML(entry.title)}</p>
+      ${entry.note ? `<p class="timeline-note">${escapeHTML(entry.note)}</p>` : ''}
+    </div>
+  `).join('');
+}
+
+function formatDateEs(dateStr) {
+  const [y, m, d] = dateStr.split('-');
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${parseInt(d, 10)} ${meses[parseInt(m, 10) - 1]} ${y}`;
+}
+
+document.getElementById('btn-toggle-add-milestone').onclick = () => {
+  const form = document.getElementById('add-milestone-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+};
+
+document.getElementById('btn-save-milestone').onclick = () => {
+  const title = document.getElementById('milestone-title').value.trim();
+  const date = document.getElementById('milestone-date').value;
+  const note = document.getElementById('milestone-note').value.trim();
+
+  if (!title || !date) return;
+
+  db.ref(`sessions/${currentCode}/timeline`).push({
+    type: 'milestone',
+    title: title,
+    date: date,
+    note: note,
+    createdAt: Date.now()
+  });
+
+  document.getElementById('milestone-title').value = '';
+  document.getElementById('milestone-date').value = '';
+  document.getElementById('milestone-note').value = '';
+  document.getElementById('add-milestone-form').style.display = 'none';
+};
