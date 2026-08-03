@@ -20,6 +20,12 @@ let gamePath = null;
 let activeQuestions = QUESTIONS;
 let coupleModeStarted = false;
 
+// Cada cuánto se desbloquea la siguiente pregunta.
+// Para PROBAR más rápido, cambia esto temporalmente, ej: 60 * 1000 (1 minuto).
+const UNLOCK_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
+
+let unlockTimerId = null; // referencia al setInterval del countdown activo
+
 // ---------- Generar código corto (4 letras/números, sin caracteres confusos) ----------
 function generateCode() {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sin O, 0, I, 1 para evitar confusión
@@ -151,8 +157,12 @@ function attachGameListener(path, questions) {
       document.getElementById('reveal-text-a').textContent = answers.player1;
       document.getElementById('reveal-name-b').textContent = playerNames.player2;
       document.getElementById('reveal-text-b').textContent = answers.player2;
+
+      scheduleUnlock(qIndex);
+      updateUnlockUI(game.unlock);
     } else if (myAnswer && !otherAnswer) {
       // yo ya respondí, esperando al otro
+      clearUnlockTimer();
       answeringBox.style.display = 'block';
       revealBox.style.display = 'none';
       input.style.display = 'none';
@@ -160,6 +170,7 @@ function attachGameListener(path, questions) {
       waitStatus.style.display = 'block';
     } else {
       // todavía no respondo
+      clearUnlockTimer();
       answeringBox.style.display = 'block';
       revealBox.style.display = 'none';
       input.style.display = 'block';
@@ -181,6 +192,61 @@ document.getElementById('btn-submit-answer').onclick = () => {
 document.getElementById('btn-next-question').onclick = () => {
   db.ref(`${gamePath}/currentQuestion`).transaction(current => (current || 0) + 1);
 };
+
+// ---------- Desbloqueo semanal de la siguiente pregunta ----------
+
+// Programa la hora de desbloqueo SOLO la primera vez que se revela esta pregunta
+// (la transaction evita que se reprograme si el otro jugador también dispara esto)
+function scheduleUnlock(qIndex) {
+  db.ref(`${gamePath}/unlock`).transaction(current => {
+    if (current && current.forQuestion === qIndex) return; // ya estaba programado
+    return { forQuestion: qIndex, availableAt: Date.now() + UNLOCK_INTERVAL_MS };
+  });
+}
+
+function clearUnlockTimer() {
+  if (unlockTimerId) {
+    clearInterval(unlockTimerId);
+    unlockTimerId = null;
+  }
+}
+
+function formatCountdown(msRemaining) {
+  const totalMinutes = Math.ceil(msRemaining / 60000);
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}min`;
+  return `${minutes} min`;
+}
+
+function updateUnlockUI(unlock) {
+  clearUnlockTimer();
+
+  const countdownEl = document.getElementById('unlock-countdown');
+  const nextBtn = document.getElementById('btn-next-question');
+
+  function render() {
+    const remaining = (unlock ? unlock.availableAt : 0) - Date.now();
+    if (!unlock || remaining <= 0) {
+      countdownEl.textContent = '¡Ya pueden seguir!';
+      nextBtn.disabled = false;
+      nextBtn.classList.remove('btn-disabled');
+      clearUnlockTimer();
+    } else {
+      countdownEl.textContent = `Siguiente pregunta en ${formatCountdown(remaining)}`;
+      nextBtn.disabled = true;
+      nextBtn.classList.add('btn-disabled');
+    }
+  }
+
+  render();
+  if (unlock && unlock.availableAt - Date.now() > 0) {
+    unlockTimerId = setInterval(render, 1000);
+  }
+}
 
 // ---------- Pasar a modo pareja ----------
 document.getElementById('btn-go-couple').onclick = () => {
