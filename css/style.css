@@ -1,0 +1,198 @@
+:root {
+  --bg: #EFF3F2;
+  --ink: #2E2E2D;
+  --ink-soft: #6B6F6D;
+  --turquoise: #2A9D8F;
+  --turquoise-deep: #1F7A6F;
+  --mustard: #E9C46A;
+  --card: #FFFFFF;
+  --error: #C1554A;
+  --radius: 18px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 15% 10%, rgba(42,157,143,0.08), transparent 45%),
+                     radial-gradient(circle at 85% 90%, rgba(233,196,106,0.14), transparent 40%);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+h1, h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 8px;
+}
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--turquoise-deep);
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.lead {
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  margin: 0 0 28px;
+}
+.lead-small {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  margin-top: 18px;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 400px;
+}
+
+.screen { display: none; }
+.screen.active { display: block; animation: rise 0.35s ease; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.actions { display: flex; flex-direction: column; gap: 12px; }
+
+.btn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 15px 20px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--turquoise);
+  color: white;
+  box-shadow: 0 6px 18px rgba(42,157,143,0.35);
+  width: 100%;
+}
+.btn-primary:hover { background: var(--turquoise-deep); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--turquoise-deep);
+  border: 2px solid var(--turquoise);
+  width: 100%;
+}
+.btn-ghost:hover { background: rgba(42,157,143,0.08); }
+
+.back {
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 18px;
+}
+
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid #DDE3E1;
+  background: var(--card);
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  margin-bottom: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.input:focus { border-color: var(--turquoise); }
+.input-mono {
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-align: center;
+  font-size: 1.3rem;
+}
+
+.error {
+  color: var(--error);
+  font-size: 0.85rem;
+  min-height: 20px;
+  margin-top: 8px;
+}
+
+/* Ticket — elemento distintivo */
+.ticket {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(46,46,45,0.08);
+  margin-bottom: 20px;
+  position: relative;
+}
+.ticket-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 8px;
+}
+.ticket-code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 2.6rem;
+  letter-spacing: 0.15em;
+  color: var(--turquoise-deep);
+  margin: 0;
+}
+.ticket-perf {
+  height: 1px;
+  margin: 20px -24px;
+  background-image: repeating-linear-gradient(to right, #DDE3E1 0, #DDE3E1 6px, transparent 6px, transparent 12px);
+}
+.ticket-hint {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.waiting-status {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  margin-top: 20px;
+}
+.waiting-status::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mustard);
+  margin-right: 8px;
+  animation: pulse 1.4s infinite ease-in-out;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}

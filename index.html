@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Jueguito — conoce a alguien</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <main class="wrap">
+
+    <!-- PANTALLA 1: elegir crear o unirse -->
+    <section id="screen-start" class="screen active">
+      <p class="eyebrow">un jueguito de preguntas</p>
+      <h1>¿Cuánto se conocen?</h1>
+      <p class="lead">Crea una sala, mándale el código a esa persona, y jueguen juntos en tiempo real. Nada de instalar nada.</p>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-go-create">Crear sala</button>
+        <button class="btn btn-ghost" id="btn-go-join">Tengo un código</button>
+      </div>
+    </section>
+
+    <!-- PANTALLA 2: crear sala (pedir nombre) -->
+    <section id="screen-create" class="screen">
+      <button class="back" data-back="screen-start">← volver</button>
+      <h2>¿Cómo te llamas?</h2>
+      <p class="lead">Esto es lo único que va a ver la otra persona.</p>
+      <input type="text" id="input-name-create" class="input" placeholder="Tu nombre" maxlength="20">
+      <button class="btn btn-primary" id="btn-create-session">Generar código</button>
+      <p class="error" id="error-create"></p>
+    </section>
+
+    <!-- PANTALLA 3: ticket con código, esperando -->
+    <section id="screen-waiting" class="screen">
+      <p class="eyebrow">tu sala está lista</p>
+      <div class="ticket">
+        <p class="ticket-label">código</p>
+        <p class="ticket-code" id="display-code">— — — —</p>
+        <div class="ticket-perf"></div>
+        <p class="ticket-hint">Mándale este código a esa persona por WhatsApp</p>
+      </div>
+      <button class="btn btn-ghost" id="btn-copy-code">Copiar código</button>
+      <p class="waiting-status" id="waiting-status">Esperando que la otra persona entre…</p>
+    </section>
+
+    <!-- PANTALLA 4: unirse con código -->
+    <section id="screen-join" class="screen">
+      <button class="back" data-back="screen-start">← volver</button>
+      <h2>Entra a la sala</h2>
+      <input type="text" id="input-code-join" class="input input-mono" placeholder="CÓDIGO" maxlength="4">
+      <input type="text" id="input-name-join" class="input" placeholder="Tu nombre" maxlength="20">
+      <button class="btn btn-primary" id="btn-join-session">Entrar</button>
+      <p class="error" id="error-join"></p>
+    </section>
+
+    <!-- PANTALLA 5: los dos conectados -->
+    <section id="screen-ready" class="screen">
+      <p class="eyebrow">¡listo!</p>
+      <h2 id="ready-title">Ya están los dos</h2>
+      <p class="lead" id="ready-names"></p>
+      <p class="lead-small">Aquí va a empezar el juego de preguntas — siguiente paso.</p>
+    </section>
+
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
