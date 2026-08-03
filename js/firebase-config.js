@@ -1,19 +1,16 @@
-// 1. Ve a https://console.firebase.google.com
-// 2. Crea un proyecto nuevo (o usa el mismo de "Tú Decides" si quieres, son independientes igual)
-// 3. Dentro del proyecto: ⚙️ > Project settings > baja hasta "Tus apps" > agrega una app Web
-// 4. Copia el objeto firebaseConfig que te da y pégalo aquí abajo
-// 5. Activa Realtime Database: menú lateral > Build > Realtime Database > Crear base de datos
-//    (modo de prueba está bien para empezar, luego ajustamos las reglas de seguridad)
+// Realtime Database: si "TU_PROYECTO" abajo en databaseURL sigue así,
+// es porque falta crear la Realtime Database (ver instrucciones abajo).
 
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  databaseURL: "https://TU_PROYECTO-default-rtdb.firebaseio.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyC1WojcTMGM53wQeOWhjfRzDLqhg62NDpg",
+  authDomain: "el-jueguito-ea2e0.firebaseapp.com",
+  databaseURL: "https://el-jueguito-ea2e0-default-rtdb.firebaseio.com",
+  projectId: "el-jueguito-ea2e0",
+  storageBucket: "el-jueguito-ea2e0.firebasestorage.app",
+  messagingSenderId: "415870159185",
+  appId: "1:415870159185:web:8211907bb658bb6dbd2b70"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
