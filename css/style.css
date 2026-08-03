@@ -220,15 +220,102 @@ h2 { font-size: 1.5rem; }
   line-height: 1.4;
 }
 
-/* Modo pareja: paleta cálida, se activa con clase en <body> */
-body.couple-theme {
-  --turquoise: #C97C5D;
-  --turquoise-deep: #A85A3E;
-  --mustard: #D9A441;
+/* Selector de paletas */
+.palette-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.palette-card {
+  background: var(--card);
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.palette-card:hover { transform: translateY(-2px); border-color: #DDE3E1; }
+.palette-swatches { display: flex; gap: 6px; margin-bottom: 10px; }
+.palette-dot { width: 22px; height: 22px; border-radius: 50%; }
+.palette-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* Botones de opción (test de lenguajes del amor) */
+.btn-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 2px solid #DDE3E1;
+  border-radius: 12px;
+  padding: 16px 18px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.btn-option:hover { border-color: var(--turquoise); background: rgba(42,157,143,0.05); }
+
+/* Chequeo mensual */
+.checkin-row {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+}
+.checkin-row label {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: 8px;
+}
+.checkin-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--turquoise);
+}
+.checkin-value {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--turquoise-deep);
+}
+.checkin-gap-flag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--error);
+  margin-top: 6px;
+}
+
+/* Modo pareja: 4 paletas seleccionables */
+body.theme-terracota {
+  --turquoise: #C97C5D; --turquoise-deep: #A85A3E; --mustard: #D9A441;
   background-image: radial-gradient(circle at 15% 10%, rgba(201,124,93,0.10), transparent 45%),
                      radial-gradient(circle at 85% 90%, rgba(217,164,65,0.16), transparent 40%);
-  transition: background 0.6s ease;
 }
+body.theme-dorado {
+  --turquoise: #D9A441; --turquoise-deep: #B5822B; --mustard: #C97C5D;
+  background-image: radial-gradient(circle at 15% 10%, rgba(217,164,65,0.12), transparent 45%),
+                     radial-gradient(circle at 85% 90%, rgba(201,124,93,0.14), transparent 40%);
+}
+body.theme-morado {
+  --turquoise: #8B6BA8; --turquoise-deep: #6B4C87; --mustard: #D9A441;
+  background-image: radial-gradient(circle at 15% 10%, rgba(139,107,168,0.12), transparent 45%),
+                     radial-gradient(circle at 85% 90%, rgba(217,164,65,0.14), transparent 40%);
+}
+body.theme-verde {
+  --turquoise: #6B8E5A; --turquoise-deep: #4F6B41; --mustard: #D9A441;
+  background-image: radial-gradient(circle at 15% 10%, rgba(107,142,90,0.12), transparent 45%),
+                     radial-gradient(circle at 85% 90%, rgba(217,164,65,0.14), transparent 40%);
+}
+body[class*="theme-"] { transition: background 0.6s ease; }
 
 .recap-item {
   background: var(--card);

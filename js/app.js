@@ -19,6 +19,9 @@ let currentQIndex = 0;
 let gamePath = null;
 let activeQuestions = QUESTIONS;
 let coupleModeStarted = false;
+let inGameFlow = true; // si false, el motor de juego no fuerza la pantalla (estamos en el hub)
+let pendingCoupleDate = null;
+let pendingCoupleLevel = null;
 
 // Cada cuánto se desbloquea la siguiente pregunta.
 // Para PROBAR más rápido, cambia esto temporalmente, ej: 60 * 1000 (1 minuto).
@@ -98,8 +101,12 @@ function listenForPartner(code) {
     // Detecta la transición a modo pareja (dispara en ambos navegadores)
     if (data.coupleStartDate && data.coupleLevel && !coupleModeStarted) {
       coupleModeStarted = true;
-      document.body.classList.add('couple-theme');
+      document.body.classList.add('theme-' + (data.coupleTheme || 'terracota'));
+      document.getElementById('btn-back-to-hub').style.display = 'inline-block';
+      document.getElementById('btn-back-to-hub-2').style.display = 'inline-block';
+      inGameFlow = false;
       attachGameListener(`sessions/${code}/couple/game`, LEVEL_QUESTIONS[data.coupleLevel]);
+      showScreen('screen-couple-hub');
     }
   });
   attachGameListener(`sessions/${code}/game`, QUESTIONS);
@@ -134,7 +141,7 @@ function attachGameListener(path, questions) {
       return;
     }
 
-    showScreen('screen-game');
+    if (inGameFlow) showScreen('screen-game');
     document.getElementById('game-progress').textContent =
       `pregunta ${qIndex + 1} de ${activeQuestions.length}`;
     document.getElementById('game-question').textContent = activeQuestions[qIndex];
@@ -257,18 +264,57 @@ document.getElementById('btn-confirm-couple-date').onclick = () => {
   const dateValue = document.getElementById('input-couple-date').value;
   if (!dateValue) return;
 
-  const level = computeLevel(dateValue);
+  pendingCoupleDate = dateValue;
+  pendingCoupleLevel = computeLevel(dateValue);
+  renderPaletteGrid();
+  showScreen('screen-couple-palette');
+};
 
-  // Escribe la fecha y el nivel en la sesión: esto dispara la transición
-  // en AMBOS navegadores a través del listener raíz (listenForPartner)
+function renderPaletteGrid() {
+  const grid = document.getElementById('palette-grid');
+  grid.innerHTML = '';
+  PALETTES.forEach(p => {
+    const card = document.createElement('button');
+    card.className = 'palette-card';
+    card.innerHTML = `
+      <div class="palette-swatches">
+        ${p.colors.map(c => `<span class="palette-dot" style="background:${c}"></span>`).join('')}
+      </div>
+      <p class="palette-name">${p.label}</p>
+    `;
+    card.onclick = () => confirmCoupleMode(p.id);
+    grid.appendChild(card);
+  });
+}
+
+function confirmCoupleMode(themeId) {
   db.ref('sessions/' + currentCode).update({
-    coupleStartDate: dateValue,
-    coupleLevel: level
+    coupleStartDate: pendingCoupleDate,
+    coupleLevel: pendingCoupleLevel,
+    coupleTheme: themeId
   });
   db.ref(`sessions/${currentCode}/couple/game`).set({
     currentQuestion: 0,
     answers: {}
   });
+}
+
+// ---------- Hub del modo pareja ----------
+document.getElementById('btn-hub-questions').onclick = () => {
+  inGameFlow = true;
+  // Muestra done si ya terminaron, o el juego si no
+  showScreen(currentQIndex >= activeQuestions.length ? 'screen-done' : 'screen-game');
+};
+document.getElementById('btn-hub-lovelang').onclick = () => openLoveQuiz();
+document.getElementById('btn-hub-checkin').onclick = () => openCheckin();
+
+document.getElementById('btn-back-to-hub').onclick = () => {
+  inGameFlow = false;
+  showScreen('screen-couple-hub');
+};
+document.getElementById('btn-back-to-hub-2').onclick = () => {
+  inGameFlow = false;
+  showScreen('screen-couple-hub');
 };
 
 // ---------- Recap final: arma la lista de preguntas y respuestas ----------
@@ -361,3 +407,165 @@ document.getElementById('btn-join-session').onclick = async () => {
     console.error(err);
   }
 };
+
+// ================= TEST DE LENGUAJES DEL AMOR =================
+let llIndex = 0;
+let llScores = { words: 0, quality_time: 0, acts: 0, gifts: 0, touch: 0 };
+let llListenerAttached = false;
+
+function openLoveQuiz() {
+  showScreen('screen-love-quiz');
+
+  // Si ya respondió antes, no lo hacemos repetir: vamos directo a esperar/revelar
+  db.ref(`sessions/${currentCode}/loveLanguage/${currentRole}`).get().then(snap => {
+    if (snap.exists()) {
+      document.getElementById('ll-answering').style.display = 'none';
+      showLoveLanguageWaitOrReveal();
+    } else {
+      llIndex = 0;
+      llScores = { words: 0, quality_time: 0, acts: 0, gifts: 0, touch: 0 };
+      document.getElementById('ll-answering').style.display = 'block';
+      document.getElementById('ll-wait-status').style.display = 'none';
+      document.getElementById('ll-reveal').style.display = 'none';
+      renderLoveLanguageQuestion();
+    }
+  });
+
+  if (!llListenerAttached) {
+    llListenerAttached = true;
+    db.ref(`sessions/${currentCode}/loveLanguage`).on('value', () => {
+      // Si estamos en la pantalla del test esperando, refresca el estado
+      if (document.getElementById('screen-love-quiz').classList.contains('active')) {
+        showLoveLanguageWaitOrReveal();
+      }
+    });
+  }
+}
+
+function renderLoveLanguageQuestion() {
+  const pair = LOVE_LANGUAGE_PAIRS[llIndex];
+  document.getElementById('ll-progress').textContent =
+    `pregunta ${llIndex + 1} de ${LOVE_LANGUAGE_PAIRS.length}`;
+  const optA = document.getElementById('ll-option-a');
+  const optB = document.getElementById('ll-option-b');
+  optA.textContent = pair.a.text;
+  optB.textContent = pair.b.text;
+  optA.onclick = () => answerLoveLanguage(pair.a.lang);
+  optB.onclick = () => answerLoveLanguage(pair.b.lang);
+}
+
+function answerLoveLanguage(lang) {
+  llScores[lang]++;
+  llIndex++;
+  if (llIndex < LOVE_LANGUAGE_PAIRS.length) {
+    renderLoveLanguageQuestion();
+  } else {
+    const top = Object.keys(llScores).reduce((a, b) => llScores[b] > llScores[a] ? b : a);
+    db.ref(`sessions/${currentCode}/loveLanguage/${currentRole}`).set({ scores: llScores, top: top });
+    document.getElementById('ll-answering').style.display = 'none';
+    showLoveLanguageWaitOrReveal();
+  }
+}
+
+function showLoveLanguageWaitOrReveal() {
+  db.ref(`sessions/${currentCode}/loveLanguage`).get().then(snap => {
+    const data = snap.val() || {};
+    if (data.player1 && data.player2) {
+      document.getElementById('ll-wait-status').style.display = 'none';
+      document.getElementById('ll-reveal').style.display = 'block';
+      document.getElementById('ll-name-a').textContent = playerNames.player1;
+      document.getElementById('ll-result-a').textContent = LOVE_LANG_LABELS[data.player1.top];
+      document.getElementById('ll-name-b').textContent = playerNames.player2;
+      document.getElementById('ll-result-b').textContent = LOVE_LANG_LABELS[data.player2.top];
+    } else {
+      document.getElementById('ll-wait-status').style.display = 'block';
+      document.getElementById('ll-reveal').style.display = 'none';
+    }
+  });
+}
+
+// ================= CHEQUEO MENSUAL =================
+let checkinListenerAttached = false;
+
+function openCheckin() {
+  showScreen('screen-checkin');
+  renderCheckinForm();
+
+  document.getElementById('checkin-form').style.display = 'block';
+  document.getElementById('btn-submit-checkin').style.display = 'block';
+  document.getElementById('checkin-wait-status').style.display = 'none';
+  document.getElementById('checkin-reveal').style.display = 'none';
+
+  db.ref(`sessions/${currentCode}/checkin/${currentRole}`).get().then(snap => {
+    if (snap.exists()) {
+      document.getElementById('checkin-form').style.display = 'none';
+      document.getElementById('btn-submit-checkin').style.display = 'none';
+      showCheckinWaitOrReveal();
+    }
+  });
+
+  if (!checkinListenerAttached) {
+    checkinListenerAttached = true;
+    db.ref(`sessions/${currentCode}/checkin`).on('value', () => {
+      if (document.getElementById('screen-checkin').classList.contains('active')) {
+        showCheckinWaitOrReveal();
+      }
+    });
+  }
+}
+
+function renderCheckinForm() {
+  const form = document.getElementById('checkin-form');
+  form.innerHTML = CHECKIN_AREAS.map(area => `
+    <div class="checkin-row">
+      <label>${area.label} <span class="checkin-value" id="checkin-val-${area.key}">5</span></label>
+      <input type="range" min="1" max="10" value="5" id="checkin-input-${area.key}">
+    </div>
+  `).join('');
+
+  CHECKIN_AREAS.forEach(area => {
+    const input = document.getElementById(`checkin-input-${area.key}`);
+    const label = document.getElementById(`checkin-val-${area.key}`);
+    input.oninput = () => label.textContent = input.value;
+  });
+}
+
+document.getElementById('btn-submit-checkin').onclick = () => {
+  const scores = {};
+  CHECKIN_AREAS.forEach(area => {
+    scores[area.key] = parseInt(document.getElementById(`checkin-input-${area.key}`).value, 10);
+  });
+  db.ref(`sessions/${currentCode}/checkin/${currentRole}`).set(scores);
+  document.getElementById('checkin-form').style.display = 'none';
+  document.getElementById('btn-submit-checkin').style.display = 'none';
+  showCheckinWaitOrReveal();
+};
+
+function showCheckinWaitOrReveal() {
+  db.ref(`sessions/${currentCode}/checkin`).get().then(snap => {
+    const data = snap.val() || {};
+    if (data.player1 && data.player2) {
+      document.getElementById('checkin-wait-status').style.display = 'none';
+      const revealList = document.getElementById('checkin-reveal-list');
+      document.getElementById('checkin-reveal').style.display = 'block';
+      revealList.innerHTML = CHECKIN_AREAS.map(area => {
+        const a = data.player1[area.key];
+        const b = data.player2[area.key];
+        const gap = Math.abs(a - b);
+        return `
+          <div class="checkin-row">
+            <label>${area.label}</label>
+            <p class="recap-answers">
+              <b>${escapeHTML(playerNames.player1)}:</b> ${a}/10 &nbsp;
+              <b>${escapeHTML(playerNames.player2)}:</b> ${b}/10
+            </p>
+            ${gap >= 3 ? '<span class="checkin-gap-flag">vale la pena conversarlo — hay una brecha</span>' : ''}
+          </div>
+        `;
+      }).join('');
+    } else {
+      document.getElementById('checkin-wait-status').style.display = 'block';
+      document.getElementById('checkin-reveal').style.display = 'none';
+    }
+  });
+}

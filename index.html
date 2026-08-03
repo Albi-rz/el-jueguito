@@ -68,6 +68,7 @@
 
     <!-- PANTALLA 6: juego de preguntas -->
     <section id="screen-game" class="screen">
+      <button class="back" id="btn-back-to-hub" style="display:none;">← menú</button>
       <p class="eyebrow" id="game-progress">pregunta 1 de 8</p>
       <h2 id="game-question">Cargando pregunta…</h2>
 
@@ -93,6 +94,7 @@
 
     <!-- PANTALLA 7: fin de la ronda + recap -->
     <section id="screen-done" class="screen">
+      <button class="back" id="btn-back-to-hub-2" style="display:none;">← menú</button>
       <p class="eyebrow">ronda terminada</p>
       <h2 id="done-title">¡Ya se conocen un poco más!</h2>
       <p class="lead" id="done-match-summary">Revisando en qué coincidieron…</p>
@@ -106,7 +108,68 @@
       <h2>¿Cuándo empezaron?</h2>
       <p class="lead">Con esto desbloqueamos preguntas hechas para donde están hoy en la relación.</p>
       <input type="date" id="input-couple-date" class="input">
-      <button class="btn btn-primary" id="btn-confirm-couple-date">Confirmar</button>
+      <button class="btn btn-primary" id="btn-confirm-couple-date">Siguiente</button>
+    </section>
+
+    <!-- PANTALLA 9: elegir paleta de colores para el modo pareja -->
+    <section id="screen-couple-palette" class="screen">
+      <p class="eyebrow">último paso</p>
+      <h2>Elijan sus colores</h2>
+      <p class="lead">Van a poder cambiarlo después si quieren.</p>
+      <div class="palette-grid" id="palette-grid"><!-- se llena por JS --></div>
+    </section>
+
+    <!-- PANTALLA 10: menú del modo pareja -->
+    <section id="screen-couple-hub" class="screen">
+      <p class="eyebrow">modo pareja</p>
+      <h2>¿Qué quieren hacer hoy?</h2>
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-hub-questions">Preguntas de esta etapa</button>
+        <button class="btn btn-ghost" id="btn-hub-lovelang">Test de lenguajes del amor</button>
+        <button class="btn btn-ghost" id="btn-hub-checkin">Chequeo del mes</button>
+      </div>
+    </section>
+
+    <!-- PANTALLA 11: test de lenguajes del amor -->
+    <section id="screen-love-quiz" class="screen">
+      <button class="back" data-back="screen-couple-hub">← menú</button>
+      <p class="eyebrow" id="ll-progress">pregunta 1 de 5</p>
+      <h2>¿Qué te hace sentir más amado/a?</h2>
+
+      <div id="ll-answering">
+        <button class="btn btn-option" id="ll-option-a"></button>
+        <button class="btn btn-option" id="ll-option-b"></button>
+      </div>
+
+      <p class="waiting-status" id="ll-wait-status" style="display:none;">Esperando el resultado de tu pareja…</p>
+
+      <div id="ll-reveal" style="display:none;">
+        <div class="answer-card">
+          <p class="answer-name" id="ll-name-a">—</p>
+          <p class="answer-text" id="ll-result-a">—</p>
+        </div>
+        <div class="answer-card">
+          <p class="answer-name" id="ll-name-b">—</p>
+          <p class="answer-text" id="ll-result-b">—</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANTALLA 12: chequeo mensual -->
+    <section id="screen-checkin" class="screen">
+      <button class="back" data-back="screen-couple-hub">← menú</button>
+      <p class="eyebrow">chequeo del mes</p>
+      <h2>¿Cómo sienten que va todo?</h2>
+      <p class="lead">Del 1 al 10, por separado. Nadie ve la respuesta del otro hasta que ambos terminen.</p>
+
+      <div id="checkin-form"><!-- se llena por JS --></div>
+      <button class="btn btn-primary" id="btn-submit-checkin">Enviar</button>
+
+      <p class="waiting-status" id="checkin-wait-status" style="display:none;">Esperando a tu pareja…</p>
+
+      <div id="checkin-reveal" style="display:none;">
+        <div id="checkin-reveal-list"></div>
+      </div>
     </section>
 
   </main>
@@ -115,6 +178,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/questions.js"></script>
+  <script src="js/extras.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
