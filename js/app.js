@@ -4,8 +4,32 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
 }
 
-document.getElementById('btn-go-create').onclick = () => showScreen('screen-create');
-document.getElementById('btn-go-join').onclick = () => showScreen('screen-join');
+document.getElementById('btn-go-create').onclick = () => checkExistingRelationshipThenGo('screen-create');
+document.getElementById('btn-go-join').onclick = () => checkExistingRelationshipThenGo('screen-join');
+
+// Antes de dejar crear/unirse a una sala nueva, avisa si ya hay una relación activa guardada en este navegador
+function checkExistingRelationshipThenGo(nextScreen) {
+  const raw = localStorage.getItem('activeCoupleSession');
+  if (!raw) { showScreen(nextScreen); return; }
+
+  let saved;
+  try { saved = JSON.parse(raw); } catch (e) { showScreen(nextScreen); return; }
+
+  db.ref('sessions/' + saved.code).get().then(snap => {
+    const data = snap.val();
+    if (data && data.coupleStartDate) {
+      const proceed = confirm(
+        `Ya tienes una relación activa con ${saved.partnerName}. ¿Seguro que quieres iniciar otra sesión?`
+      );
+      if (!proceed) return;
+    }
+    showScreen(nextScreen);
+  }).catch(() => showScreen(nextScreen)); // si falla la consulta, no bloqueamos al usuario
+}
+
+function saveActiveRelationship(code, partnerName) {
+  localStorage.setItem('activeCoupleSession', JSON.stringify({ code, partnerName, savedAt: Date.now() }));
+}
 document.querySelectorAll('.back').forEach(btn => {
   btn.onclick = () => showScreen(btn.dataset.back);
 });
@@ -107,6 +131,9 @@ function listenForPartner(code) {
       inGameFlow = false;
       attachGameListener(`sessions/${code}/couple/game`, LEVEL_QUESTIONS[data.coupleLevel]);
       showScreen('screen-couple-hub');
+
+      const partnerName = currentRole === 'player1' ? data.player2.name : data.player1.name;
+      saveActiveRelationship(code, partnerName);
     }
   });
   attachGameListener(`sessions/${code}/game`, QUESTIONS);
