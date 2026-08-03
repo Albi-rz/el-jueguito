@@ -58,12 +58,43 @@
       <p class="error" id="error-join"></p>
     </section>
 
-    <!-- PANTALLA 5: los dos conectados -->
+    <!-- PANTALLA 5: los dos conectados, transición al juego -->
     <section id="screen-ready" class="screen">
       <p class="eyebrow">¡listo!</p>
       <h2 id="ready-title">Ya están los dos</h2>
       <p class="lead" id="ready-names"></p>
-      <p class="lead-small">Aquí va a empezar el juego de preguntas — siguiente paso.</p>
+      <button class="btn btn-primary" id="btn-start-game">Empezar</button>
+    </section>
+
+    <!-- PANTALLA 6: juego de preguntas -->
+    <section id="screen-game" class="screen">
+      <p class="eyebrow" id="game-progress">pregunta 1 de 8</p>
+      <h2 id="game-question">Cargando pregunta…</h2>
+
+      <div id="game-answering">
+        <textarea id="game-answer-input" class="input textarea" rows="3" placeholder="Escribe tu respuesta…"></textarea>
+        <button class="btn btn-primary" id="btn-submit-answer">Responder</button>
+        <p class="waiting-status" id="game-wait-status" style="display:none;">Esperando la respuesta de la otra persona…</p>
+      </div>
+
+      <div id="game-reveal" style="display:none;">
+        <div class="answer-card">
+          <p class="answer-name" id="reveal-name-a">—</p>
+          <p class="answer-text" id="reveal-text-a">—</p>
+        </div>
+        <div class="answer-card">
+          <p class="answer-name" id="reveal-name-b">—</p>
+          <p class="answer-text" id="reveal-text-b">—</p>
+        </div>
+        <button class="btn btn-primary" id="btn-next-question">Siguiente pregunta</button>
+      </div>
+    </section>
+
+    <!-- PANTALLA 7: fin de la ronda -->
+    <section id="screen-done" class="screen">
+      <p class="eyebrow">ronda terminada</p>
+      <h2>¡Ya se conocen un poco más!</h2>
+      <p class="lead">Respondieron 8 preguntas juntos. La próxima vez que entren a esta sala, va a haber preguntas nuevas.</p>
     </section>
 
   </main>
@@ -71,6 +102,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script src="js/firebase-config.js"></script>
+  <script src="js/questions.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

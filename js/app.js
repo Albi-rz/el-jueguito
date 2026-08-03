@@ -14,6 +14,8 @@ document.querySelectorAll('.back').forEach(btn => {
 let currentCode = null;
 let currentRole = null; // 'player1' o 'player2'
 let sessionRef = null;
+let playerNames = { player1: null, player2: null };
+let currentQIndex = 0;
 
 // ---------- Generar código corto (4 letras/números, sin caracteres confusos) ----------
 function generateCode() {
@@ -76,12 +78,92 @@ function listenForPartner(code) {
     if (!data) return;
 
     if (data.player1 && data.player2) {
+      playerNames.player1 = data.player1.name;
+      playerNames.player2 = data.player2.name;
       document.getElementById('ready-names').textContent =
         `${data.player1.name} y ${data.player2.name}`;
-      showScreen('screen-ready');
+      // Solo cambiamos a screen-ready si el juego todavía no empezó
+      if (!data.game) showScreen('screen-ready');
+    }
+  });
+  listenForGame(code);
+}
+
+// ---------- Empezar juego ----------
+document.getElementById('btn-start-game').onclick = () => {
+  db.ref('sessions/' + currentCode + '/game').set({
+    currentQuestion: 0,
+    answers: {}
+  });
+};
+
+// ---------- Escuchar el estado del juego (sincroniza a ambos) ----------
+function listenForGame(code) {
+  db.ref('sessions/' + code + '/game').on('value', (snapshot) => {
+    const game = snapshot.val();
+    if (!game) return; // aún no empieza
+
+    const qIndex = game.currentQuestion || 0;
+    currentQIndex = qIndex;
+
+    if (qIndex >= QUESTIONS.length) {
+      showScreen('screen-done');
+      return;
+    }
+
+    showScreen('screen-game');
+    document.getElementById('game-progress').textContent =
+      `pregunta ${qIndex + 1} de ${QUESTIONS.length}`;
+    document.getElementById('game-question').textContent = QUESTIONS[qIndex];
+
+    const answers = (game.answers && game.answers[qIndex]) || {};
+    const otherRole = currentRole === 'player1' ? 'player2' : 'player1';
+    const myAnswer = answers[currentRole];
+    const otherAnswer = answers[otherRole];
+
+    const answeringBox = document.getElementById('game-answering');
+    const revealBox = document.getElementById('game-reveal');
+    const waitStatus = document.getElementById('game-wait-status');
+    const input = document.getElementById('game-answer-input');
+
+    if (myAnswer && otherAnswer) {
+      // los dos respondieron: revelar
+      answeringBox.style.display = 'none';
+      revealBox.style.display = 'block';
+      document.getElementById('reveal-name-a').textContent = playerNames.player1;
+      document.getElementById('reveal-text-a').textContent = answers.player1;
+      document.getElementById('reveal-name-b').textContent = playerNames.player2;
+      document.getElementById('reveal-text-b').textContent = answers.player2;
+    } else if (myAnswer && !otherAnswer) {
+      // yo ya respondí, esperando al otro
+      answeringBox.style.display = 'block';
+      revealBox.style.display = 'none';
+      input.style.display = 'none';
+      document.getElementById('btn-submit-answer').style.display = 'none';
+      waitStatus.style.display = 'block';
+    } else {
+      // todavía no respondo
+      answeringBox.style.display = 'block';
+      revealBox.style.display = 'none';
+      input.style.display = 'block';
+      input.value = '';
+      document.getElementById('btn-submit-answer').style.display = 'block';
+      waitStatus.style.display = 'none';
     }
   });
 }
+
+// ---------- Enviar respuesta ----------
+document.getElementById('btn-submit-answer').onclick = () => {
+  const text = document.getElementById('game-answer-input').value.trim();
+  if (!text) return;
+  db.ref(`sessions/${currentCode}/game/answers/${currentQIndex}/${currentRole}`).set(text);
+};
+
+// ---------- Siguiente pregunta (avance seguro con transaction) ----------
+document.getElementById('btn-next-question').onclick = () => {
+  db.ref(`sessions/${currentCode}/game/currentQuestion`).transaction(current => (current || 0) + 1);
+};
 
 // ---------- Unirse a sala existente ----------
 document.getElementById('btn-join-session').onclick = async () => {
@@ -122,10 +204,13 @@ document.getElementById('btn-join-session').onclick = async () => {
 
     currentCode = code;
     currentRole = 'player2';
+    playerNames.player1 = data.player1.name;
+    playerNames.player2 = name;
 
     document.getElementById('ready-names').textContent =
       `${data.player1.name} y ${name}`;
     showScreen('screen-ready');
+    listenForGame(code);
 
   } catch (err) {
     errorEl.textContent = 'Algo falló. Revisa tu conexión e intenta de nuevo.';
