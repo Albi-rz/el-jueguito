@@ -204,6 +204,42 @@ h2 { font-size: 1.5rem; }
   line-height: 1.4;
 }
 
+.recap-item {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  box-shadow: 0 3px 10px rgba(46,46,45,0.05);
+}
+.recap-question {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  margin: 0 0 8px;
+}
+.recap-answers {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin: 0;
+}
+.recap-answers b { color: var(--ink); font-weight: 600; }
+.recap-item.match {
+  border-left: 4px solid var(--mustard);
+}
+.recap-match-tag {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--turquoise-deep);
+  background: rgba(42,157,143,0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
 .waiting-status {
   text-align: center;
   color: var(--ink-soft);

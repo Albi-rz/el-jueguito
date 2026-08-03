@@ -107,6 +107,7 @@ function listenForGame(code) {
     currentQIndex = qIndex;
 
     if (qIndex >= QUESTIONS.length) {
+      renderRecap(game.answers || {});
       showScreen('screen-done');
       return;
     }
@@ -164,6 +165,62 @@ document.getElementById('btn-submit-answer').onclick = () => {
 document.getElementById('btn-next-question').onclick = () => {
   db.ref(`sessions/${currentCode}/game/currentQuestion`).transaction(current => (current || 0) + 1);
 };
+
+// ---------- Recap final: arma la lista y detecta coincidencias ----------
+const STOPWORDS = new Set([
+  'el','la','los','las','un','una','unos','unas','de','del','al','a','y','o',
+  'que','en','con','por','para','se','su','sus','mi','mis','tu','tus','me',
+  'te','le','les','lo','es','soy','eres','ser','estar','muy','mas','más',
+  'no','si','sí','como','cuando','donde','porque','pero','ya','todo','toda'
+]);
+
+function normalizeWords(text) {
+  return (text || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita acentos
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !STOPWORDS.has(w));
+}
+
+function sharesWord(textA, textB) {
+  const wordsA = new Set(normalizeWords(textA));
+  const wordsB = normalizeWords(textB);
+  return wordsB.some(w => wordsA.has(w));
+}
+
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderRecap(answers) {
+  const container = document.getElementById('recap-list');
+  container.innerHTML = '';
+  let matchCount = 0;
+
+  QUESTIONS.forEach((question, i) => {
+    const pair = answers[i] || {};
+    const a = pair.player1 || '(sin responder)';
+    const b = pair.player2 || '(sin responder)';
+    const isMatch = pair.player1 && pair.player2 && sharesWord(a, b);
+    if (isMatch) matchCount++;
+
+    const item = document.createElement('div');
+    item.className = 'recap-item' + (isMatch ? ' match' : '');
+    item.innerHTML = `
+      ${isMatch ? '<span class="recap-match-tag">coincidieron</span>' : ''}
+      <p class="recap-question">${escapeHTML(question)}</p>
+      <p class="recap-answers"><b>${escapeHTML(playerNames.player1)}:</b> ${escapeHTML(a)}</p>
+      <p class="recap-answers"><b>${escapeHTML(playerNames.player2)}:</b> ${escapeHTML(b)}</p>
+    `;
+    container.appendChild(item);
+  });
+
+  document.getElementById('done-match-summary').textContent =
+    `Coincidieron en ${matchCount} de ${QUESTIONS.length} respuestas.`;
+}
 
 // ---------- Unirse a sala existente ----------
 document.getElementById('btn-join-session').onclick = async () => {
